@@ -17,7 +17,7 @@ import subprocess
 from PIL import ImageTk, Image, ImageFont, ImageDraw
 
 
-class Page():
+class Page:
     def __init__(self, img_file, canvas):
         self.img_file = img_file
         self.img = Image.open(img_file)
@@ -30,8 +30,7 @@ class Page():
         self.xoffset = (self.canvas.winfo_width() - self.width) / 2
         self.yoffset = (self.canvas.winfo_height() - self.height) / 2
         self.tkimg = ImageTk.PhotoImage(image=self.img)
-        self.box_resize(self.canvas.winfo_width(),
-                        self.canvas.winfo_height())
+        self.box_resize(self.canvas.winfo_width(), self.canvas.winfo_height())
 
     def select(self, annotation):
         if annotation == self.selected:
@@ -58,25 +57,27 @@ class Page():
         self.xoffset = (width - self.width) / 2
         self.yoffset = (height - self.height) / 2
         self.img = Image.open(self.img_file)
-        self.img = self.img.resize((self.width, self.height),
-                                   Image.ANTIALIAS)
-        print("New image dimensions: {}x{}".format(self.img.width,
-              self.img.height))
+        self.img = self.img.resize((self.width, self.height), Image.LANCZOS)
+        print("New image dimensions: {}x{}".format(self.img.width, self.img.height))
         self.tkimg = ImageTk.PhotoImage(image=self.img)
         print("Page resized to {}x{}".format(self.width, self.height))
 
     def canvas_draw(self):
         self.canvas.delete("all")
-        self.canvas.create_image(self.xoffset, self.yoffset,
-                                 anchor=tk.NW, image=self.tkimg)
+        self.canvas.create_image(
+            self.xoffset, self.yoffset, anchor=tk.NW, image=self.tkimg
+        )
         for s in self.annotations:
             s.canvas_draw()
         self.canvas.update_idletasks()
-        print("Page redrawn at {}/{} ({}x{})".format(self.xoffset,
-              self.yoffset, self.width, self.height))
+        print(
+            "Page redrawn at {}/{} ({}x{})".format(
+                self.xoffset, self.yoffset, self.width, self.height
+            )
+        )
 
 
-class Annotation():
+class Annotation:
     def __init__(self, page, img, event=None):
         self.page = page
         page.annotations.append(self)
@@ -127,8 +128,7 @@ class Annotation():
         self.rel_width = width / self.page.width
         nimg = self.img_orig
         scale = width / nimg.width
-        self.img = nimg.resize((int(width), int(nimg.height * scale)),
-                               Image.NEAREST)
+        self.img = nimg.resize((int(width), int(nimg.height * scale)), Image.NEAREST)
         self.tkimg = ImageTk.PhotoImage(image=self.img)
 
     def canvas_draw(self):
@@ -137,28 +137,30 @@ class Annotation():
         self.x = self.rel_x * self.page.width + self.page.xoffset
         self.y = self.rel_y * self.page.height + self.page.yoffset
         self.resize(self.page.width * self.rel_width)
-        self.oid = self.page.canvas.create_image(self.x, self.y,
-                                                 anchor=tk.CENTER,
-                                                 image=self.tkimg)
+        self.oid = self.page.canvas.create_image(
+            self.x, self.y, anchor=tk.CENTER, image=self.tkimg
+        )
         self.page.canvas.tag_bind(self.oid, "<Button-4>", self.smaller)
         self.page.canvas.tag_bind(self.oid, "<Button-5>", self.larger)
         self.page.canvas.tag_bind(self.oid, "<ButtonPress-1>", self.drag_start)
         self.page.canvas.tag_bind(self.oid, "<ButtonRelease-1>", self.drag_end)
         self.page.canvas.tag_bind(self.oid, "<B1-Motion>", self.drag)
         self.page.canvas.tag_bind(self.oid, "<Button-3>", self.delete)
-        print("Drawing annotation at {}/{}, oid={}, width: {}"
-              .format(self.x,
-                      self.y,
-                      self.oid,
-                      self.width))
+        print(
+            "Drawing annotation at {}/{}, oid={}, width: {}".format(
+                self.x, self.y, self.oid, self.width
+            )
+        )
         self.update_select_rect()
         self.page.canvas.update_idletasks()
 
     def coords(self):
-        return (int(self.x - self.img.width // 2),
-                int(self.y - self.img.height // 2),
-                int(self.x + self.img.width // 2),
-                int(self.y + self.img.height // 2))
+        return (
+            int(self.x - self.img.width // 2),
+            int(self.y - self.img.height // 2),
+            int(self.x + self.img.width // 2),
+            int(self.y + self.img.height // 2),
+        )
 
     def update_select_rect(self):
         if self.select_rect_oid not in self.page.canvas.find_all():
@@ -183,7 +185,7 @@ class Annotation():
         nimg = self.img_orig
         scale = width / nimg.width
         height = int(nimg.height * scale)
-        nimg = nimg.resize((width, height), Image.ANTIALIAS)
+        nimg = nimg.resize((width, height), Image.LANCZOS)
         image.paste(nimg, (x - width // 2, y - height // 2), nimg)
 
     def smaller(self, event):
@@ -199,7 +201,7 @@ class Annotation():
         self.page.canvas.update_idletasks()
 
     def drag_start(self, event):
-        '''Begining drag of an object'''
+        """Begining drag of an object"""
         event.widget.tag_click = True
         self.select()
         # record the item and its location
@@ -209,7 +211,7 @@ class Annotation():
         print("Current pos: {}x{}".format(self.x, self.y))
 
     def drag_end(self, event):
-        '''End drag of an object'''
+        """End drag of an object"""
         self.rel_x = (self.x - self.page.xoffset) / self.page.width
         self.rel_y = (self.y - self.page.yoffset) / self.page.height
         # reset the drag information
@@ -220,7 +222,7 @@ class Annotation():
         self.page.canvas_draw()
 
     def drag(self, event):
-        '''Handle dragging of an object'''
+        """Handle dragging of an object"""
         # compute how much the mouse has moved
         delta_x = event.x - self._drag_data["x"]
         delta_y = event.y - self._drag_data["y"]
@@ -249,16 +251,29 @@ class Fspdf:
         shutil.copyfile(self.pdf_file, self.tmp_pdf)
 
         # Convert it to png images
-        subprocess.run(["convert", "-density", "150", self.tmp_pdf,
-                        "-alpha", "off",
-                       "".join([self.tmp_pdf[:-4], "-%04d.png"])],
-                       stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                       check=True)
+        subprocess.run(
+            [
+                "convert",
+                "-density",
+                "150",
+                self.tmp_pdf,
+                "-alpha",
+                "off",
+                "".join([self.tmp_pdf[:-4], "-%04d.png"]),
+            ],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=True,
+        )
 
         # Filenames of png images are sorted and correspond to pages in PDF
-        png_files = sorted([os.path.join(tempdir.name, f)
-                           for f in os.listdir(tempdir.name)
-                           if f[-4:] == ".png"])
+        png_files = sorted(
+            [
+                os.path.join(tempdir.name, f)
+                for f in os.listdir(tempdir.name)
+                if f[-4:] == ".png"
+            ]
+        )
         print("Generated page images: {}".format(", ".join(png_files)))
 
         self.pages = []
@@ -277,14 +292,18 @@ class Fspdf:
         self.mode = tk.StringVar()
         self.mode.set("off")
 
-        off_button = tk.Radiobutton(right, text="Off", variable=self.mode,
-                                    value="off", indicatoron=0)
-        sign_button = tk.Radiobutton(right, text="Sign", variable=self.mode,
-                                     value="sign", indicatoron=0)
-        fill_button = tk.Radiobutton(right, text="Fill", variable=self.mode,
-                                     value="fill", indicatoron=0)
-        erase_button = tk.Radiobutton(right, text="Erase", variable=self.mode,
-                                      value="erase", indicatoron=0)
+        off_button = tk.Radiobutton(
+            right, text="Off", variable=self.mode, value="off", indicatoron=0
+        )
+        sign_button = tk.Radiobutton(
+            right, text="Sign", variable=self.mode, value="sign", indicatoron=0
+        )
+        fill_button = tk.Radiobutton(
+            right, text="Fill", variable=self.mode, value="fill", indicatoron=0
+        )
+        erase_button = tk.Radiobutton(
+            right, text="Erase", variable=self.mode, value="erase", indicatoron=0
+        )
         off_button.pack(fill=tk.X)
         sign_button.pack(fill=tk.X)
         fill_button.pack(fill=tk.X)
@@ -293,16 +312,13 @@ class Fspdf:
         self.text = tk.Text(right, height=10, width=30)
         self.text.pack()
 
-        prev_button = tk.Button(right, text="Previous page",
-                                command=self.prev_page)
+        prev_button = tk.Button(right, text="Previous page", command=self.prev_page)
         prev_button.pack()
 
-        next_button = tk.Button(right, text="Next page",
-                                command=self.next_page)
+        next_button = tk.Button(right, text="Next page", command=self.next_page)
         next_button.pack()
 
-        ps_button = tk.Button(right, text="Save signed PDF",
-                              command=self.save_pdf)
+        ps_button = tk.Button(right, text="Save signed PDF", command=self.save_pdf)
         ps_button.pack()
 
         self.canvas = tk.Canvas(left)
@@ -336,28 +352,40 @@ class Fspdf:
         empty.save(empty_file)
         stamp_pdf = "{}-stamp.pdf".format(self.tmp_pdf[:-4])
         # Convert it to png images
-        subprocess.run(["convert", *stamp_files, empty_file, stamp_pdf],
-                       stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                       check=True)
-        subprocess.run(["pdftk", self.tmp_pdf, "multistamp", stamp_pdf,
-                        "output", "{}-signed.pdf".format(self.pdf_file[:-4])],
-                       stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                       check=True)
+        subprocess.run(
+            ["convert", *stamp_files, empty_file, stamp_pdf],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=True,
+        )
+        subprocess.run(
+            [
+                "pdftk",
+                self.tmp_pdf,
+                "multistamp",
+                stamp_pdf,
+                "output",
+                "{}-signed.pdf".format(self.pdf_file[:-4]),
+            ],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=True,
+        )
 
     def resize(self, event):
         print("Window resiszing...")
         print("event {}x{}".format(event.width, event.height))
-        print("canvas {}x{}".format(self.canvas.winfo_width(),
-                                    self.canvas.winfo_height()))
-        self.page.box_resize(self.canvas.winfo_width(),
-                             self.canvas.winfo_height())
+        print(
+            "canvas {}x{}".format(self.canvas.winfo_width(), self.canvas.winfo_height())
+        )
+        self.page.box_resize(self.canvas.winfo_width(), self.canvas.winfo_height())
         self.page.canvas_draw()
 
     def create_element(self, event):
         if event.widget.tag_click:
             event.widget.tag_click = False
             return
-        print("Left click, mode is \"{}\".".format(self.mode.get()))
+        print('Left click, mode is "{}".'.format(self.mode.get()))
         if self.mode.get() == "sign":
             img = Image.open(self.sig_file)
             Annotation(self.page, img, event)
@@ -367,27 +395,27 @@ class Fspdf:
                 print("No text, returning...")
                 return
             lines = value.split("\n")
-            fnt = ImageFont.truetype('Pillow/Tests/fonts/DejaVuSans.ttf', 72)
-            txt = Image.new('RGBA', (1000, 1000), (0, 0, 0, 0))
+            fnt = ImageFont.truetype("Pillow/Tests/fonts/DejaVuSans.ttf", 72)
+            txt = Image.new("RGBA", (1000, 1000), (0, 0, 0, 0))
             d = ImageDraw.Draw(txt)
             width = 0
             height = 0
             for l in lines:
-                size = d.textsize(l, font=fnt)
-                width = max(size[0], width)
-                height = max(size[1], height)
+                size = int(d.textlength(l, font=fnt))
+                width = max(size, width)
+                height = max(size, height)
             if width == 0 or height == 0:
                 print("Fill image is empty, returning")
                 return
             size = (width, int(height * 1.5 * len(lines)))
-            txt = Image.new('RGBA', size, (0, 0, 0, 0))
+            txt = Image.new("RGBA", size, (0, 0, 0, 0))
             d = ImageDraw.Draw(txt)
             print("Size of text: {}".format((width, size)))
             for i, l in enumerate(lines):
                 d.text((0, i * height * 1.5), l, font=fnt, fill=(0, 0, 0, 255))
             Annotation(self.page, txt, event)
         elif self.mode.get() == "erase":
-            eraser = Image.new('RGBA', (10, 10), (255, 255, 255, 255))
+            eraser = Image.new("RGBA", (10, 10), (255, 255, 255, 255))
             Annotation(self.page, eraser, event)
 
     def prev_page(self):
@@ -405,8 +433,7 @@ class Fspdf:
 
 def main():
     config = configparser.ConfigParser()
-    for loc in (os.curdir, os.path.expanduser("~/.config"),
-                "/etc/fspdf"):
+    for loc in (os.curdir, os.path.expanduser("~/.config"), "/etc/fspdf"):
         try:
             with open(os.path.join(loc, "fspdf.conf")) as source:
                 config.read_file(source)
@@ -416,18 +443,29 @@ def main():
         except IOError:
             pass
     parser = argparse.ArgumentParser(description="Fill and sign any PDF.")
-    parser.add_argument('pdf_file', metavar='PDF_FILE', type=str,
-                        help='The PDF file to be filled and signed')
-    parser.add_argument('-s', '--signature', dest='sig_file',
-                        metavar='SIGNATURE_FILE', type=str,
-                        help='A transparent png image wih your signature',
-                        default='')
+    parser.add_argument(
+        "pdf_file",
+        metavar="PDF_FILE",
+        type=str,
+        help="The PDF file to be filled and signed",
+    )
+    parser.add_argument(
+        "-s",
+        "--signature",
+        dest="sig_file",
+        metavar="SIGNATURE_FILE",
+        type=str,
+        help="A transparent png image wih your signature",
+        default="",
+    )
     args = parser.parse_args()
     print("Executing fspdf version %s." % __version__)
     if args.sig_file == "":
-        if 'sig_file' not in config['DEFAULT']:
-            print("No signature given. Either provide it as argument with -s or create a config file. See README.md for details.")
+        if "sig_file" not in config["DEFAULT"]:
+            print(
+                "No signature given. Either provide it as argument with -s or create a config file. See README.md for details."
+            )
             exit()
         else:
-            args.sig_file = os.path.expanduser(config['DEFAULT']['sig_file'])
+            args.sig_file = os.path.expanduser(config["DEFAULT"]["sig_file"])
     Fspdf(args.pdf_file, args.sig_file)
